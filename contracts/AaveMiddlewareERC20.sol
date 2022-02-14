@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Unlicense
-pragma solidity ^0.8.11;
+pragma solidity ^0.8.4;
 import "hardhat/console.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ILendingPool} from "@aave/protocol-v2/contracts/interfaces/ILendingPool.sol";
@@ -19,7 +19,7 @@ contract AaveMiddleware{
         _;
     }
 
-    function getLendingPoolAddress() internal returns(address){
+    function getLendingPoolAddress() internal view returns(address){
         address  _LendingPoolAddressProviderAddr=0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5; //Mainnet
         ILendingPoolAddressesProvider LendingAddProvider = ILendingPoolAddressesProvider(_LendingPoolAddressProviderAddr);
         address LendingPoolAddress=LendingAddProvider.getLendingPool();
