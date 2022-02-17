@@ -20,7 +20,7 @@ contract AaveMiddleware{
     //     _;
     // }
 
-    function getLendingPoolAddress() internal view returns(address){
+    function getLendingPoolAddress() public view returns(address){
         address  _LendingPoolAddressProviderAddr=0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5; //Mainnet
         ILendingPoolAddressesProvider LendingAddProvider = ILendingPoolAddressesProvider(_LendingPoolAddressProviderAddr);
         address LendingPoolAddress=LendingAddProvider.getLendingPool();
@@ -69,7 +69,7 @@ contract AaveMiddleware{
         address wethGatewayAddress=0xcc9a0B7c43DC2a5F023Bb9b738E45B0Ef6B06E04;      //Mainnet
         address _LendingPoolAddress=getLendingPoolAddress();
         IWETHGateway wethGateway=IWETHGateway(wethGatewayAddress);
-        wethGateway.depositETH(_LendingPoolAddress,address(this),0);
+        wethGateway.depositETH{value: msg.value}(_LendingPoolAddress,address(this),0);
 
     }
 

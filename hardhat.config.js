@@ -23,8 +23,11 @@ module.exports = {
   networks: {
     hardhat: {
       forking: {
-        url: `https://eth-goerli.alchemyapi.io/v2/${apiKey}`, //Mainnet Forking
+        url: `https://eth-mainnet.alchemyapi.io/v2/${apiKey}`, //Mainnet Forking
       },
     },
+  },
+  mocha: {
+    timeout: 10000 * 1000, // 10,000 seconds
   },
 };
