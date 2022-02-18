@@ -75,8 +75,11 @@ contract AaveMiddleware{
 
     function withdrawEth(uint _amount) external {
         address wethGatewayAddress=0xcc9a0B7c43DC2a5F023Bb9b738E45B0Ef6B06E04;      //Mainnet
-        address _LendingPoolAddress=getLendingPoolAddress();
+        address _LendingPoolAddress=getLendingPoolAddress();        //a eth allow?
         IWETHGateway wethGateway=IWETHGateway(wethGatewayAddress);
+        address aWethAddress=0x030bA81f1c18d280636F32af80b9AAd02Cf0854e; //AWeth contract on Mainnet
+        IERC20 erc20Token=IERC20(aWethAddress); 
+        erc20Token.approve(_LendingPoolAddress,_amount);
         wethGateway.withdrawETH(_LendingPoolAddress,_amount,msg.sender);
 
     }
@@ -91,7 +94,7 @@ contract AaveMiddleware{
         address wethGatewayAddress=0xcc9a0B7c43DC2a5F023Bb9b738E45B0Ef6B06E04;      //Mainnet
         address _LendingPoolAddress=getLendingPoolAddress();
         IWETHGateway wethGateway=IWETHGateway(wethGatewayAddress);
-        wethGateway.repayETH(_LendingPoolAddress,msg.value,1,address(this));
+        wethGateway.repayETH{value: msg.value}(_LendingPoolAddress,msg.value,1,address(this));
 
     }
 }

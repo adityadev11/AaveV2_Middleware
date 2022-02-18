@@ -21,22 +21,29 @@ describe("Aave Middleware", function () {
       var res = await hardhatAave.connect(owner).depositEth({
         value: ethers.utils.parseEther("0.10"),
       });
+      //expect(res.receipt.status).to.equal(true);
       console.log(res);
     });
-    // it("Should withdraw eth from aave", async function () {
-    //   const [owner] = await ethers.getSigners();
-    //   var res = await hardhatAave.withdrawEth(10000); //Amount in wei
-    //   console.log(res);
-    // });
-    // it("Should borrow eth from aave", async function () {
-    //   const [owner] = await ethers.getSigners();
-    //   var res = await hardhatAave.borrowEth(10000); //Amount in wei
-    //   console.log(res);
-    // });
-    // it("Should repay eth to aave", async function () {
-    //   const [owner] = await ethers.getSigners();
-    //   var res = await hardhatAave.repayEth();
-    //   console.log(res);
-    // });
+
+    it("Should withdraw eth from aave", async function () {
+      const [owner] = await ethers.getSigners();
+
+      var res = await hardhatAave.withdrawEth(10000); //Amount in wei
+      console.log(res);
+    });
+
+    it("Should borrow eth from aave", async function () {
+      const [owner] = await ethers.getSigners();
+      var res = await hardhatAave.borrowEth(10000); //Amount in wei
+      console.log(res);
+    });
+
+    it("Should repay eth to aave", async function () {
+      const [owner] = await ethers.getSigners();
+      var res = await hardhatAave.connect(owner).repayEth({
+        value: ethers.utils.parseEther("0.01"),
+      });
+      console.log(res);
+    });
   });
 });
