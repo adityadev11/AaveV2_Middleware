@@ -18,22 +18,21 @@ describe("Aave Middleware", function () {
     //console.log(result);
     expect(result).to.be.a("string");
     expect(result).to.equal("0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9");
-    console.log(deployedContractAddress);
   });
   describe("Eth Functions", function () {
     it("Should deposit eth to aave", async function () {
-      console.log(deployedContractAddress);
       const [owner] = await ethers.getSigners();
+      console.log("Initial Owner Balance", await owner.getBalance());
       //var res = await hardhatAave.depositEth();
       var res = await hardhatAave.connect(owner).depositEth({
-        value: ethers.utils.parseEther("0.10"),
+        value: ethers.utils.parseEther("10"),
       });
       //expect(res.receipt.status).to.equal(true);
       console.log(res);
+      console.log("Updated Owner Balance", await owner.getBalance());
     });
 
     it("Should withdraw eth from aave", async function () {
-      console.log(deployedContractAddress);
       const [owner] = await ethers.getSigners();
 
       var res = await hardhatAave.connect(owner).withdrawEth(10000); //Amount in wei
@@ -76,12 +75,26 @@ describe("Aave Middleware", function () {
     });
 
     it("Should deposit DAI to aave", async function () {
-      var amount = 100000000000;
+      var amount = 1000000000000000;
+      var bal = await DaiContract.balanceOf(accountAddress);
+      console.log("Dai Balance", bal);
+
       //const walletBalancePrior = await ethers.provider.getBalance(testAccount); //DaiContract.getBalance()?
       //console.log(walletBalancePrior);
       let tx = await DaiContract.approve(deployedContractAddress, amount);
       //var res = await hardhatAave.depositEth();
       var res = await hardhatAave.connect(testAccount).depositToken(amount); //ethers.utils.parseEther("0.10")
+      //expect(res.receipt.status).to.equal(true);
+      console.log(res);
+
+      bal = await DaiContract.balanceOf(accountAddress);
+      console.log(bal);
+    });
+    it("Should Withdraw DAI from aave", async function () {
+      var amount = 1000000000;
+      var bal = await DaiContract.balanceOf(accountAddress);
+      console.log(bal);
+      var res = await hardhatAave.connect(testAccount).withdrawToken(amount); //ethers.utils.parseEther("0.10")
       //expect(res.receipt.status).to.equal(true);
       console.log(res);
     });

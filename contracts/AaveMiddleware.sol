@@ -79,7 +79,7 @@ contract AaveMiddleware{
         IWETHGateway wethGateway=IWETHGateway(wethGatewayAddress);
         address aWethAddress=0x030bA81f1c18d280636F32af80b9AAd02Cf0854e; //AWeth contract on Mainnet
         IERC20 erc20Token=IERC20(aWethAddress); 
-        erc20Token.approve(_LendingPoolAddress,_amount);
+        erc20Token.approve(wethGatewayAddress,_amount);
         wethGateway.withdrawETH(_LendingPoolAddress,_amount,msg.sender);
 
     }
