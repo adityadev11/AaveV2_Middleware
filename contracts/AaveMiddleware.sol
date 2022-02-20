@@ -32,7 +32,9 @@ contract AaveMiddleware{
         IERC20 erc20Token=IERC20(DaiAddress);    
         address _LendingPoolAddress=getLendingPoolAddress();
         ILendingPool LendingPool=ILendingPool(_LendingPoolAddress);
-        erc20Token.transferFrom(msg.sender,address(this),_amount);      //Assuming the User has already Approved this amount using approve() function
+        
+        require(erc20Token.transferFrom(msg.sender,address(this),_amount),"error hai bhai");      //Assuming the User has already Approved this amount using approve() function
+        
         //ownerBalance[msg.sender]+=_amount;
         erc20Token.approve(_LendingPoolAddress,_amount);
         LendingPool.deposit(DaiAddress,_amount,address(this),0); //The referral program is currently inactive and you can pass 0 as thereferralCode.
@@ -52,6 +54,7 @@ contract AaveMiddleware{
         ILendingPool LendingPool=ILendingPool(_LendingPoolAddress);
         LendingPool.borrow(DaiAddress,_amount,1,0,address(this));     //Amount borrowed. Will be received by the contract
         erc20Token.transfer(msg.sender, _amount);                       //Transferring the borrowed funds to the user
+        console.log(msg.sender);
         //ownerBalance[msg.sender]-=_amount;                              //Assuming For now that the Collateralization Ratio is 1:1
     }
     function repayToken(uint _amount) external {
