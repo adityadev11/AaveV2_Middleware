@@ -39,9 +39,24 @@ describe("Aave Middleware", function () {
       "function approve(address to, uint amount)", //correct?
     ];
 
+    const DaiContractAddr = "0x6B175474E89094C44Da98b954EedeAC495271d0F"; //mainnet
+    const accountAddress = "0x535De4eB0f28eFc0332C5702F8002bBd33115270"; //Impersonating account
+    var DaiContract;
+    var testAccount;
+
+    beforeEach(async () => {
+      // impersonating the account.
+      await hre.network.provider.request({
+        method: "hardhat_impersonateAccount",
+        params: [accountAddress],
+      });
+      testAccount = await ethers.getSigner(accountAddress);
+      DaiContract = new ethers.Contract(DaiContractAddr, abi, testAccount);
+    });
+
     it("Should deposit eth to aave", async function () {
       console.log("Deployed contract address", deployedContractAddress);
-      const [owner] = await ethers.getSigners();
+      const owner = testAccount;
       console.log(owner.getAddress());
       awethContract = new ethers.Contract(awethContractAddr, abi, owner);
       var bal = await awethContract.balanceOf(deployedContractAddress);
@@ -60,7 +75,7 @@ describe("Aave Middleware", function () {
 
     it("Should withdraw eth from aave", async function () {
       console.log("Deployed contract address", deployedContractAddress);
-      const [owner] = await ethers.getSigners();
+      const owner = testAccount;
       awethContract = new ethers.Contract(awethContractAddr, abi, owner);
       var bal = await awethContract.balanceOf(deployedContractAddress);
       console.log("Inital Aweth Balance (Withdraw)", bal);
@@ -79,11 +94,74 @@ describe("Aave Middleware", function () {
         await owner.getBalance()
       );
     });
+    it("Should Borrow DAI from aave", async function () {
+      var amount = 1000000000;
+      console.log(
+        "Deployed contract address(Borrow Dai)",
+        deployedContractAddress
+      );
+      var bal = await DaiContract.balanceOf(accountAddress);
+      console.log("Old DAI Balance", bal);
+      var res = await hardhatAave.connect(testAccount).borrowToken(amount);
+      //expect(res.receipt.status).to.equal(true);
+      //console.log(res);
+      bal = await DaiContract.balanceOf(accountAddress);
+      console.log("New DAI balance", bal);
+    });
+    it("Should repay DAI to aave", async function () {
+      console.log(
+        "Deployed contract address(Repay Dai)",
+        deployedContractAddress
+      );
+      var amount = 1000000000;
+      var bal = await DaiContract.balanceOf(accountAddress);
+      console.log("Old DAI Balance", bal);
+      let tx = await DaiContract.connect(testAccount).approve(
+        deployedContractAddress,
+        amount
+      );
+      var res = await hardhatAave.connect(testAccount).repayToken(amount); //ethers.utils.parseEther("0.10")
+      //expect(res.receipt.status).to.equal(true);
+      //console.log(res);
+      bal = await DaiContract.balanceOf(accountAddress);
+      console.log("New DAI balance", bal);
+    });
 
-    xit("Should borrow eth from aave", async function () {
-      const [owner] = await ethers.getSigners();
+    it("Should deposit DAI to aave", async function () {
+      var amount = ethers.utils.parseEther("30000");
+      var bal = await DaiContract.balanceOf(accountAddress);
+      console.log("Old Dai Balance", bal);
+
+      //const walletBalancePrior = await ethers.provider.getBalance(testAccount); //DaiContract.getBalance()?
+      //console.log(walletBalancePrior);
+      let tx = await DaiContract.connect(testAccount).approve(
+        deployedContractAddress,
+        amount
+      );
+      //var res = await hardhatAave.depositEth();
+      var res = await hardhatAave.connect(testAccount).depositToken(amount); //ethers.utils.parseEther("0.10")
+      //expect(res.receipt.status).to.equal(true);
+      //console.log(res);
+
+      bal = await DaiContract.balanceOf(accountAddress);
+      console.log("New Dai Balance", bal);
+    });
+
+    it("Should Withdraw DAI from aave", async function () {
+      var amount = 1000000000;
+      var bal = await DaiContract.balanceOf(accountAddress);
+      console.log("Old Dai Balance", bal);
+      var res = await hardhatAave.connect(testAccount).withdrawToken(amount); //ethers.utils.parseEther("0.10")
+      //console.log(res);
+      bal = await DaiContract.balanceOf(accountAddress);
+      console.log("New Dai Balance", bal);
+    });
+
+    it("Should borrow eth from aave", async function () {
+      const owner = testAccount;
       var bal = await awethContract.balanceOf(deployedContractAddress);
-      console.log("Inital Aweth Balance (Borrow)", bal);
+      console.log("Inital Aweth Balance(Borrow)", bal);
+
       console.log(
         "Initial Owner Eth Balance (Borrow)",
         await owner.getBalance()
@@ -99,85 +177,12 @@ describe("Aave Middleware", function () {
       );
     });
 
-    xit("Should repay eth to aave", async function () {
-      const [owner] = await ethers.getSigners();
-      var res = await hardhatAave.connect(owner).repayEth({
-        value: ethers.utils.parseEther("1"),
-      });
-      console.log(res);
-    });
-  });
-
-  xdescribe("ERC20 Functions", function () {
-    const DaiContractAddr = "0x6B175474E89094C44Da98b954EedeAC495271d0F"; //mainnet
-    const accountAddress = "0x535De4eB0f28eFc0332C5702F8002bBd33115270"; //Impersonating account
-    var DaiContract;
-    var testAccount;
-    const abi = [
-      "function balanceOf(address) view returns (uint)",
-
-      "function approve(address to, uint amount)", //correct?
-    ];
-    beforeEach(async () => {
-      // impersonating the account.
-      await hre.network.provider.request({
-        method: "hardhat_impersonateAccount",
-        params: [accountAddress],
-      });
-      testAccount = await ethers.getSigner(accountAddress);
-      DaiContract = new ethers.Contract(DaiContractAddr, abi, testAccount);
-    });
-
-    xit("Should deposit DAI to aave", async function () {
-      var amount = ethers.utils.parseEther("0.10");
-      var bal = await DaiContract.balanceOf(accountAddress);
-      console.log("Dai Balance", bal);
-
-      //const walletBalancePrior = await ethers.provider.getBalance(testAccount); //DaiContract.getBalance()?
-      //console.log(walletBalancePrior);
-      let tx = await DaiContract.connect(testAccount).approve(
-        deployedContractAddress,
-        amount
-      );
-      //var res = await hardhatAave.depositEth();
-      var res = await hardhatAave.connect(testAccount).depositToken(amount); //ethers.utils.parseEther("0.10")
-      //expect(res.receipt.status).to.equal(true);
-      console.log(res);
-
-      bal = await DaiContract.balanceOf(accountAddress);
-      console.log(bal);
-    });
-    xit("Should Withdraw DAI from aave", async function () {
-      var amount = 1000000000;
-      var bal = await DaiContract.balanceOf(accountAddress);
-      console.log(bal);
-      var res = await hardhatAave.connect(testAccount).withdrawToken(amount); //ethers.utils.parseEther("0.10")
-      //expect(res.receipt.status).to.equal(true);
-      console.log(res);
-    });
-    it("Should Borrow DAI from aave", async function () {
-      var amount = 1000000000;
-      console.log(
-        "Deployed contract address(Borrow Dai)",
-        deployedContractAddress
-      );
-      var bal = await DaiContract.balanceOf(accountAddress);
-      console.log("Old Balance", bal);
-      var res = await hardhatAave.connect(testAccount).borrowToken(amount);
-      //expect(res.receipt.status).to.equal(true);
-      //console.log(res);
-      bal = await DaiContract.balanceOf(accountAddress);
-      console.log("New balance", bal);
-    });
-    xit("Should repay DAI to aave", async function () {
-      var amount = 1000000000;
-      var bal = await DaiContract.balanceOf(accountAddress);
-      console.log("Old Balance", bal);
-      var res = await hardhatAave.connect(testAccount).repayToken(amount); //ethers.utils.parseEther("0.10")
-      //expect(res.receipt.status).to.equal(true);
-      console.log(res);
-      bal = await DaiContract.balanceOf(accountAddress);
-      console.log("New balance", bal);
-    });
+    // xit("Should repay eth to aave", async function () {
+    //   const [owner] = await ethers.getSigners();
+    //   var res = await hardhatAave.connect(owner).repayEth({
+    //     value: ethers.utils.parseEther("1"),
+    //   });
+    //   console.log(res);
+    // });
   });
 });
