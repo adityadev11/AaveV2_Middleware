@@ -33,11 +33,12 @@ contract AaveMiddleware{
         address _LendingPoolAddress=getLendingPoolAddress();
         ILendingPool LendingPool=ILendingPool(_LendingPoolAddress);
         
-        require(erc20Token.transferFrom(msg.sender,address(this),_amount),"error hai bhai");      //Assuming the User has already Approved this amount using approve() function
+        require(erc20Token.transferFrom(msg.sender,address(this),_amount),"error ");      //Assuming the User has already Approved this amount using approve() function
         
         //ownerBalance[msg.sender]+=_amount;
         erc20Token.approve(_LendingPoolAddress,_amount);
         LendingPool.deposit(DaiAddress,_amount,address(this),0); //The referral program is currently inactive and you can pass 0 as thereferralCode.
+        //LendingPool.setUserUseReserveAsCollateral(DaiAddress,true);       //Will it help?
     }
 
     function withdrawToken(uint _amount) external {
