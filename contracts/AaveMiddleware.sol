@@ -24,10 +24,8 @@ contract AaveMiddleware{
     // }
 
     function getLendingPoolAddress() public view returns(address){
-        address  _LendingPoolAddressProviderAddr=0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5; //Mainnet
-        ILendingPoolAddressesProvider LendingAddProvider = ILendingPoolAddressesProvider(_LendingPoolAddressProviderAddr);
-        address LendingPoolAddress=LendingAddProvider.getLendingPool();
-        return LendingPoolAddress;
+        //Mainnet
+        return ILendingPoolAddressesProvider(address(0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5)).getLendingPool();
     }
 
     function depositToken(uint _amount) external {
