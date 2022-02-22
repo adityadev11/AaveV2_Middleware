@@ -118,7 +118,7 @@ describe("Aave Middleware", function () {
       );
     });
     it("Should Borrow DAI from aave", async function () {
-      var amount = 1000000000;
+      var amount = ethers.utils.parseEther("10");
       console.log(
         "Deployed contract address(Borrow Dai)",
         deployedContractAddress
@@ -136,7 +136,7 @@ describe("Aave Middleware", function () {
         "Deployed contract address(Repay Dai)",
         deployedContractAddress
       );
-      var amount = 1000000000;
+      var amount = ethers.utils.parseEther("10");
       var bal = await DaiContract.balanceOf(accountAddress);
       console.log("Old DAI Balance", bal);
       let tx = await DaiContract.connect(testAccount).approve(

@@ -5,6 +5,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ILendingPool} from "@aave/protocol-v2/contracts/interfaces/ILendingPool.sol";
 import {ILendingPoolAddressesProvider} from "@aave/protocol-v2/contracts/interfaces/ILendingPoolAddressesProvider.sol";
 import {IWETHGateway} from "@aave/protocol-v2/contracts/misc/interfaces/IWETHGateway.sol";
+import {IStableDebtToken} from "@aave/protocol-v2/contracts/interfaces/IStableDebtToken.sol";
 import "./Iweth.sol";
 
 
@@ -90,54 +91,65 @@ contract AaveMiddleware{
 
     }
     function borrowEth(uint _amount) external payable{
-        // address wethGatewayAddress=0xcc9a0B7c43DC2a5F023Bb9b738E45B0Ef6B06E04;      //Mainnet
-        // address _LendingPoolAddress=getLendingPoolAddress();
-        // IWETHGateway wethGateway=IWETHGateway(wethGatewayAddress);
-        // wethGateway.borrowETH(_LendingPoolAddress,_amount,1,0);
-        console.log(address(this).balance);
 
-        address wethAddress=0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; //Weth on Ethereum
-        //IERC20 erc20Token=IERC20(wethAddress);    
+        console.log(address(this).balance);
+        address wethGatewayAddress=0xcc9a0B7c43DC2a5F023Bb9b738E45B0Ef6B06E04;      //Mainnet
+        address wethStableDebtTokenAddr=0x4e977830ba4bd783C0BB7F15d3e243f73FF57121;
+        IStableDebtToken debtToken=IStableDebtToken(wethStableDebtTokenAddr);
+        debtToken.approveDelegation(wethGatewayAddress,_amount);
         address _LendingPoolAddress=getLendingPoolAddress();
-        ILendingPool LendingPool=ILendingPool(_LendingPoolAddress);
-        LendingPool.borrow(wethAddress,_amount,1,0,address(this));     //Amount borrowed. Will be received by the contract
 
-        Iweth weth=Iweth(wethAddress);
-        weth.withdraw(_amount);
         
-        console.log(address(this).balance);
-        
+        IWETHGateway wethGateway=IWETHGateway(wethGatewayAddress);
+        wethGateway.borrowETH(_LendingPoolAddress,_amount,1,0);
+         console.log(address(this).balance);
         bool sent=payable(msg.sender).send(address(this).balance);
         console.log(sent);
-
+        
         console.log(address(this).balance);
+
+        // address wethAddress=0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; //Weth on Ethereum
+        // //IERC20 erc20Token=IERC20(wethAddress);    
+        // address _LendingPoolAddress=getLendingPoolAddress();
+        // ILendingPool LendingPool=ILendingPool(_LendingPoolAddress);
+        // LendingPool.borrow(wethAddress,_amount,1,0,address(this));     //Amount borrowed. Will be received by the contract
+
+        // Iweth weth=Iweth(wethAddress);
+        // weth.withdraw(_amount);
+        
+        // console.log(address(this).balance);
+        
+        // bool sent=payable(msg.sender).send(address(this).balance);
+        // console.log(sent);
+
+       // console.log(address(this).balance);
 
     }
     function repayEth() external payable{
-        // address wethGatewayAddress=0xcc9a0B7c43DC2a5F023Bb9b738E45B0Ef6B06E04;      //Mainnet
-        // address _LendingPoolAddress=getLendingPoolAddress();
-        // IWETHGateway wethGateway=IWETHGateway(wethGatewayAddress);
-        // wethGateway.repayETH{value: msg.value}(_LendingPoolAddress,msg.value,1,address(this));
-
-
-        console.log(msg.value);
-        console.log(address(this).balance);
-
-        uint _amount=msg.value;
-        address wethAddress=0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; //Weth on Ethereum
-        Iweth weth=Iweth(wethAddress);
-        weth.deposit{value: msg.value}();
-
-        console.log(address(this).balance);
-        IERC20 erc20Token=IERC20(wethAddress);
-        console.log(erc20Token.balanceOf(address(this))); 
-
+        address wethGatewayAddress=0xcc9a0B7c43DC2a5F023Bb9b738E45B0Ef6B06E04;      //Mainnet
         address _LendingPoolAddress=getLendingPoolAddress();
-        ILendingPool LendingPool=ILendingPool(_LendingPoolAddress);
-        erc20Token.approve(_LendingPoolAddress,_amount);
-        LendingPool.repay(wethAddress,_amount,1,address(this));     //Amount borrowed
+        IWETHGateway wethGateway=IWETHGateway(wethGatewayAddress);
+        wethGateway.repayETH{value: msg.value}(_LendingPoolAddress,msg.value,1,address(this));
 
-        console.log(erc20Token.balanceOf(address(this))); 
+
+        // console.log(msg.value);
+        // console.log(address(this).balance);
+
+        // uint _amount=msg.value;
+        // address wethAddress=0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; //Weth on Ethereum
+        // Iweth weth=Iweth(wethAddress);
+        // weth.deposit{value: msg.value}();
+
+        // console.log(address(this).balance);
+        // IERC20 erc20Token=IERC20(wethAddress);
+        // console.log(erc20Token.balanceOf(address(this))); 
+
+        // address _LendingPoolAddress=getLendingPoolAddress();
+        // ILendingPool LendingPool=ILendingPool(_LendingPoolAddress);
+        // erc20Token.approve(_LendingPoolAddress,_amount);
+        // LendingPool.repay(wethAddress,_amount,1,address(this));     //Amount borrowed
+
+        // console.log(erc20Token.balanceOf(address(this))); 
     }
 
     event ValueReceived(address user, uint amount);
