@@ -46,8 +46,7 @@ contract AaveMiddleware{
 
     function withdrawToken(uint _amount) external {
         address DaiAddress=0x6B175474E89094C44Da98b954EedeAC495271d0F; //DAI on Ethereum    
-        address _LendingPoolAddress=getLendingPoolAddress();
-        ILendingPool LendingPool=ILendingPool(_LendingPoolAddress);
+        ILendingPool LendingPool=ILendingPool(address(getLendingPoolAddress()));
         LendingPool.withdraw(DaiAddress,_amount,msg.sender);     //Amount Withdrawn to the user
         //ownerBalance[msg.sender]-=_amount;
     }
