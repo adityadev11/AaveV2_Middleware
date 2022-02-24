@@ -76,9 +76,23 @@ describe("Aave Middleware", function () {
       bal = await awethContract.balanceOf(deployedContractAddress);
       console.log("Final Aweth Balance (Contract)     ", bal);
     }
+    it("Should leverage eth ", async function () {
+      //var amount = ethers.utils.parseEther("5");
+      var bal = await awethContract.balanceOf(deployedContractAddress);
+      console.log("Inital Aweth Balance", bal);
+      console.log("Initial Owner Eth Balance", await testAccount.getBalance());
+
+      var res = await hardhatAave.connect(testAccount).leverage({
+        value: ethers.utils.parseEther("20"),
+      });
+      //console.log(res);
+      console.log("Updated Owner Eth Balance", await testAccount.getBalance());
+      bal = await awethContract.balanceOf(deployedContractAddress);
+      console.log("Updated Aweth Balance", bal);
+    });
 
     //Function Tests
-    it("Should deposit eth to aave", async function () {
+    xit("Should deposit eth to aave", async function () {
       var bal = await awethContract.balanceOf(deployedContractAddress);
       console.log("Inital Aweth Balance", bal);
       console.log("Initial Owner Eth Balance", await testAccount.getBalance());
@@ -92,7 +106,7 @@ describe("Aave Middleware", function () {
       console.log("Updated Aweth Balance", bal);
     });
 
-    it("Should withdraw eth from aave", async function () {
+    xit("Should withdraw eth from aave", async function () {
       const owner = testAccount;
       //awethContract = new ethers.Contract(awethContractAddr, abi, owner);
       var bal = await awethContract.balanceOf(deployedContractAddress);
@@ -112,7 +126,23 @@ describe("Aave Middleware", function () {
         await owner.getBalance()
       );
     });
-    it("Should Borrow DAI from aave", async function () {
+
+    xit("Should deposit DAI to aave", async function () {
+      var amount = ethers.utils.parseEther("300000");
+      await DisplayInitialAmounts();
+
+      let tx = await DaiContract.connect(testAccount).approve(
+        deployedContractAddress,
+        amount
+      );
+      var res = await hardhatAave
+        .connect(testAccount)
+        .depositToken(amount, tokenAddress);
+      //console.log(res);
+      await DisplayFinalAmounts();
+    });
+
+    xit("Should Borrow DAI from aave", async function () {
       var amount = ethers.utils.parseEther("10");
       var bal = await DaiContract.balanceOf(accountAddress);
       console.log("Old DAI Balance", bal);
@@ -123,7 +153,8 @@ describe("Aave Middleware", function () {
       bal = await DaiContract.balanceOf(accountAddress);
       console.log("New DAI balance", bal);
     });
-    it("Should repay DAI to aave", async function () {
+
+    xit("Should repay DAI to aave", async function () {
       var amount = ethers.utils.parseEther("10");
       var bal = await DaiContract.balanceOf(accountAddress);
       console.log("Old DAI Balance", bal);
@@ -139,7 +170,7 @@ describe("Aave Middleware", function () {
       console.log("New DAI balance", bal);
     });
 
-    it("Should Deploy contract Again", async function () {
+    xit("Should Deploy contract Again", async function () {
       Aave = await ethers.getContractFactory("AaveMiddleware");
       hardhatAave = await Aave.deploy();
       await hardhatAave.deployed();
@@ -150,22 +181,7 @@ describe("Aave Middleware", function () {
       );
     });
 
-    it("Should deposit DAI to aave", async function () {
-      var amount = ethers.utils.parseEther("300000");
-      await DisplayInitialAmounts();
-
-      let tx = await DaiContract.connect(testAccount).approve(
-        deployedContractAddress,
-        amount
-      );
-      var res = await hardhatAave
-        .connect(testAccount)
-        .depositToken(amount, tokenAddress);
-      //console.log(res);
-      await DisplayFinalAmounts();
-    });
-
-    it("Should Withdraw DAI from aave", async function () {
+    xit("Should Withdraw DAI from aave", async function () {
       var amount = ethers.utils.parseEther("2000");
       await DisplayInitialAmounts();
       var res = await hardhatAave
@@ -175,7 +191,7 @@ describe("Aave Middleware", function () {
       await DisplayFinalAmounts();
     });
 
-    it("Should borrow eth from aave", async function () {
+    xit("Should borrow eth from aave", async function () {
       await DisplayInitialAmounts();
       var res = await hardhatAave
         .connect(testAccount)
@@ -184,7 +200,7 @@ describe("Aave Middleware", function () {
       await DisplayFinalAmounts();
     });
 
-    it("Should repay eth to aave", async function () {
+    xit("Should repay eth to aave", async function () {
       await DisplayInitialAmounts();
 
       var res = await hardhatAave.connect(testAccount).repayEth({
