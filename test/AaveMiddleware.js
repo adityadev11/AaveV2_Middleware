@@ -76,13 +76,14 @@ describe("Aave Middleware", function () {
       bal = await awethContract.balanceOf(deployedContractAddress);
       console.log("Final Aweth Balance (Contract)     ", bal);
     }
-    it("Should leverage eth ", async function () {
-      //var amount = ethers.utils.parseEther("5");
+
+    //Function Tests
+    it("Should deposit eth to aave", async function () {
       var bal = await awethContract.balanceOf(deployedContractAddress);
       console.log("Inital Aweth Balance", bal);
       console.log("Initial Owner Eth Balance", await testAccount.getBalance());
 
-      var res = await hardhatAave.connect(testAccount).leverage({
+      var res = await hardhatAave.connect(testAccount).depositEth({
         value: ethers.utils.parseEther("20"),
       });
       //console.log(res);
@@ -91,15 +92,25 @@ describe("Aave Middleware", function () {
       console.log("Updated Aweth Balance", bal);
     });
 
-    //Function Tests
-    xit("Should deposit eth to aave", async function () {
+    it("Should leverage eth ", async function () {
+      //var amount = ethers.utils.parseEther("5");
       var bal = await awethContract.balanceOf(deployedContractAddress);
       console.log("Inital Aweth Balance", bal);
       console.log("Initial Owner Eth Balance", await testAccount.getBalance());
-
-      var res = await hardhatAave.connect(testAccount).depositEth({
-        value: ethers.utils.parseEther("20"),
-      });
+      var amount = ethers.utils.parseEther("10");
+      var res = await hardhatAave.connect(testAccount).leverage(amount);
+      //console.log(res);
+      console.log("Updated Owner Eth Balance", await testAccount.getBalance());
+      bal = await awethContract.balanceOf(deployedContractAddress);
+      console.log("Updated Aweth Balance", bal);
+    });
+    it("Should leverage eth again", async function () {
+      //var amount = ethers.utils.parseEther("5");
+      var bal = await awethContract.balanceOf(deployedContractAddress);
+      console.log("Inital Aweth Balance", bal);
+      console.log("Initial Owner Eth Balance", await testAccount.getBalance());
+      var amount = ethers.utils.parseEther("3");
+      var res = await hardhatAave.connect(testAccount).leverage(amount);
       //console.log(res);
       console.log("Updated Owner Eth Balance", await testAccount.getBalance());
       bal = await awethContract.balanceOf(deployedContractAddress);

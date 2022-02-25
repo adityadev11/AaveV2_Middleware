@@ -108,19 +108,9 @@ contract AaveMiddleware {
     LendingPool.repay(wethAddress, _amount, 1, address(this)); //Amount borrowed
   }
 
-  function leverage() external payable {
-    console.log("Deposit");
-    address wethGatewayAddress = 0xcc9a0B7c43DC2a5F023Bb9b738E45B0Ef6B06E04; //Mainnet
+  function leverage(uint256 _amount) external payable {
     address _LendingPoolAddress = getLendingPoolAddress();
-    IWETHGateway wethGateway = IWETHGateway(wethGatewayAddress);
-    wethGateway.depositETH{ value: msg.value }(
-      _LendingPoolAddress,
-      address(this),
-      0
-    );
-
     ILendingPool LendingPool = ILendingPool(_LendingPoolAddress);
-
     (
       uint256 a1,
       uint256 a2,
@@ -135,44 +125,45 @@ contract AaveMiddleware {
     console.log("currentLiquidationThreshold", a4);
     console.log("ltv                        ", a5);
     console.log("healthFactor               ", a6);
-    uint256 count = 1;
+    console.log("Deposit");
+    console.log("Amount requested to Borrow", _amount);
 
-    while (a3 > 0) {
-      console.log("Borrow", count);
-      address wethAddress = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; //Weth on Ethereum
+    require(_amount <= a3, "Requested Amount is more than borrow allowance");
 
-      LendingPool.borrow(wethAddress, a3 + 10000000, 2, 0, address(this)); //Amount borrowed. Will be received by the contract
+    console.log("Borrowing..");
+    address wethAddress = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; //Weth on Ethereum
 
-      Iweth weth = Iweth(wethAddress);
-      weth.withdraw(a3);
-      //console.log("Balance", address(this).balance);
-      //bool sent = payable(msg.sender).send(address(this).balance);
-      //console.log(sent);
-      (a1, a2, a3, a4, a5, a6) = LendingPool.getUserAccountData(address(this));
-      console.log("totalCollateralETH         ", a1);
-      console.log("totalDebtETH               ", a2);
-      console.log("availableBorrowsETH        ", a3);
-      console.log("currentLiquidationThreshold", a4);
-      console.log("ltv                        ", a5);
-      console.log("healthFactor               ", a6);
+    LendingPool.borrow(wethAddress, _amount, 2, 0, address(this)); //Amount borrowed. Will be received by the contract
 
-      console.log("Deposit", count);
-      wethGateway.depositETH{ value: (address(this).balance) }(
-        _LendingPoolAddress,
-        address(this),
-        0
-      );
-      (a1, a2, a3, a4, a5, a6) = LendingPool.getUserAccountData(address(this));
-      console.log("totalCollateralETH         ", a1);
-      console.log("totalDebtETH               ", a2);
-      console.log("availableBorrowsETH        ", a3);
-      console.log("currentLiquidationThreshold", a4);
-      console.log("ltv                        ", a5);
-      console.log("healthFactor               ", a6);
+    Iweth weth = Iweth(wethAddress);
+    weth.withdraw(_amount);
 
-      count++;
-      console.log("Balance", address(this).balance);
-    }
+    console.log(
+      "Successfully Borrowed! Contract balance-",
+      address(this).balance
+    );
+    address wethGatewayAddress = 0xcc9a0B7c43DC2a5F023Bb9b738E45B0Ef6B06E04; //Mainnet
+    console.log("Depositing..");
+    IWETHGateway wethGateway = IWETHGateway(wethGatewayAddress);
+    wethGateway.depositETH{ value: address(this).balance }(
+      _LendingPoolAddress,
+      address(this),
+      0
+    );
+    console.log(
+      "Successfully Deposited! Contract balance-",
+      address(this).balance
+    );
+    //console.log("Balance", address(this).balance);
+    //bool sent = payable(msg.sender).send(address(this).balance);
+    //console.log(sent);
+    (a1, a2, a3, a4, a5, a6) = LendingPool.getUserAccountData(address(this));
+    console.log("totalCollateralETH         ", a1);
+    console.log("totalDebtETH               ", a2);
+    console.log("availableBorrowsETH        ", a3);
+    console.log("currentLiquidationThreshold", a4);
+    console.log("ltv                        ", a5);
+    console.log("healthFactor               ", a6);
   }
 
   event ValueReceived(address user, uint256 amount); //Event for Receive
