@@ -25,41 +25,36 @@ contract AaveMiddleware {
   }
 
   function depositToken(uint256 _amount, address _tokenAddr) external {
-    address TokenAddress = _tokenAddr; //Token Address on Mainnet. Re-initiated in all functions to avoid gas cost associated with state varaibles.
-    IERC20 erc20Token = IERC20(TokenAddress);
+    IERC20 erc20Token = IERC20(_tokenAddr);
     address _LendingPoolAddress = getLendingPoolAddress();
     ILendingPool LendingPool = ILendingPool(_LendingPoolAddress);
 
     erc20Token.safeTransferFrom(msg.sender, address(this), _amount); //Assuming the User has already Approved this amount using approve() function
 
     erc20Token.safeApprove(_LendingPoolAddress, _amount);
-    LendingPool.deposit(TokenAddress, _amount, address(this), 0); //The referral program is currently inactive and you can pass 0 as thereferralCode.
-    LendingPool.setUserUseReserveAsCollateral(_tokenAddr, true); //Not needed
+    LendingPool.deposit(_tokenAddr, _amount, address(this), 0); //The referral program is currently inactive and you can pass 0 as thereferralCode.
   }
 
   function withdrawToken(uint256 _amount, address _tokenAddr) external {
-    address TokenAddress = _tokenAddr; //Token Address on Mainnet
     ILendingPool LendingPool = ILendingPool(address(getLendingPoolAddress()));
-    LendingPool.withdraw(TokenAddress, _amount, msg.sender); //Amount Withdrawn to the user
+    LendingPool.withdraw(_tokenAddr, _amount, msg.sender); //Amount Withdrawn to the user
   }
 
   function borrowToken(uint256 _amount, address _tokenAddr) external {
-    address TokenAddress = _tokenAddr; //Token Address on Mainnet
-    IERC20 erc20Token = IERC20(TokenAddress);
+    IERC20 erc20Token = IERC20(_tokenAddr);
     address _LendingPoolAddress = getLendingPoolAddress();
     ILendingPool LendingPool = ILendingPool(_LendingPoolAddress);
-    LendingPool.borrow(TokenAddress, _amount, 2, 0, address(this)); //Amount borrowed. Will be received by the contract
+    LendingPool.borrow(_tokenAddr, _amount, 2, 0, address(this)); //Amount borrowed. Will be received by the contract
     erc20Token.safeTransfer(msg.sender, _amount); //Transferring the borrowed funds to the user
   }
 
   function repayToken(uint256 _amount, address _tokenAddr) external {
-    address TokenAddress = _tokenAddr; //Token Address on Mainnet
-    IERC20 erc20Token = IERC20(TokenAddress);
+    IERC20 erc20Token = IERC20(_tokenAddr);
     address _LendingPoolAddress = getLendingPoolAddress();
     ILendingPool LendingPool = ILendingPool(_LendingPoolAddress);
     erc20Token.safeTransferFrom(msg.sender, address(this), _amount); //Assuming the User has already Approved this amount using approve() function
     erc20Token.safeApprove(_LendingPoolAddress, _amount);
-    LendingPool.repay(TokenAddress, _amount, 1, address(this)); //Amount borrowed
+    LendingPool.repay(_tokenAddr, _amount, 2, address(this)); //Amount borrowed
   }
 
   function depositEth() external payable {
@@ -108,27 +103,30 @@ contract AaveMiddleware {
     LendingPool.repay(wethAddress, _amount, 1, address(this)); //Amount borrowed
   }
 
-  function leverage(uint256 _amount) external payable {
+  function leverageEth(uint256 _amount) external payable {
     address _LendingPoolAddress = getLendingPoolAddress();
     ILendingPool LendingPool = ILendingPool(_LendingPoolAddress);
     (
-      uint256 a1,
-      uint256 a2,
-      uint256 a3,
-      uint256 a4,
-      uint256 a5,
-      uint256 a6
+      uint256 collateral,
+      uint256 debt,
+      uint256 maxBorrow,
+      uint256 liqThreshold,
+      uint256 ltv,
+      uint256 hFactor
     ) = LendingPool.getUserAccountData(address(this));
-    console.log("totalCollateralETH         ", a1);
-    console.log("totalDebtETH               ", a2);
-    console.log("availableBorrowsETH        ", a3);
-    console.log("currentLiquidationThreshold", a4);
-    console.log("ltv                        ", a5);
-    console.log("healthFactor               ", a6);
+    console.log("totalCollateralETH         ", collateral);
+    console.log("totalDebtETH               ", debt);
+    console.log("availableBorrowsETH        ", maxBorrow);
+    console.log("currentLiquidationThreshold", liqThreshold);
+    console.log("ltv                        ", ltv);
+    console.log("healthFactor               ", hFactor);
     console.log("Deposit");
     console.log("Amount requested to Borrow", _amount);
 
-    require(_amount <= a3, "Requested Amount is more than borrow allowance");
+    require(
+      _amount <= maxBorrow,
+      "Requested Amount is more than borrow allowance"
+    );
 
     console.log("Borrowing..");
     address wethAddress = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; //Weth on Ethereum
@@ -154,16 +152,25 @@ contract AaveMiddleware {
       "Successfully Deposited! Contract balance-",
       address(this).balance
     );
-    //console.log("Balance", address(this).balance);
-    //bool sent = payable(msg.sender).send(address(this).balance);
-    //console.log(sent);
-    (a1, a2, a3, a4, a5, a6) = LendingPool.getUserAccountData(address(this));
-    console.log("totalCollateralETH         ", a1);
-    console.log("totalDebtETH               ", a2);
-    console.log("availableBorrowsETH        ", a3);
-    console.log("currentLiquidationThreshold", a4);
-    console.log("ltv                        ", a5);
-    console.log("healthFactor               ", a6);
+    (collateral, debt, maxBorrow, liqThreshold, ltv, hFactor) = LendingPool
+      .getUserAccountData(address(this));
+    console.log("totalCollateralETH         ", collateral);
+    console.log("totalDebtETH               ", debt);
+    console.log("availableBorrowsETH        ", maxBorrow);
+    console.log("currentLiquidationThreshold", liqThreshold);
+    console.log("ltv                        ", ltv);
+    console.log("healthFactor               ", hFactor);
+  }
+
+  function leverageToken(uint256 _amount, address _tokenAddr) external {
+    IERC20 erc20Token = IERC20(_tokenAddr);
+    address _LendingPoolAddress = getLendingPoolAddress();
+    ILendingPool LendingPool = ILendingPool(_LendingPoolAddress);
+
+    erc20Token.safeTransferFrom(msg.sender, address(this), _amount); //Assuming the User has already Approved this amount using approve() function
+
+    erc20Token.safeApprove(_LendingPoolAddress, _amount);
+    LendingPool.deposit(_tokenAddr, _amount, address(this), 0); //The referral program is currently inactive and you can pass 0 as thereferralCode.
   }
 
   event ValueReceived(address user, uint256 amount); //Event for Receive
