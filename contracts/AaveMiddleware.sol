@@ -109,7 +109,7 @@ contract AaveMiddleware {
   }
 
   function leverage() external payable {
-    console.log(msg.value);
+    console.log("Deposit");
     address wethGatewayAddress = 0xcc9a0B7c43DC2a5F023Bb9b738E45B0Ef6B06E04; //Mainnet
     address _LendingPoolAddress = getLendingPoolAddress();
     IWETHGateway wethGateway = IWETHGateway(wethGatewayAddress);
@@ -118,7 +118,7 @@ contract AaveMiddleware {
       address(this),
       0
     );
-    console.log("Balance", address(this).balance);
+
     ILendingPool LendingPool = ILendingPool(_LendingPoolAddress);
 
     (
@@ -129,68 +129,50 @@ contract AaveMiddleware {
       uint256 a5,
       uint256 a6
     ) = LendingPool.getUserAccountData(address(this));
-    console.log("a1", a1);
-    console.log("a2", a2);
-    console.log("a3", a3);
-    console.log("a4", a4);
-    console.log("a5", a5);
-    console.log("a6", a6);
-    //uint256 _amount = 10000000000000000000;
+    console.log("totalCollateralETH         ", a1);
+    console.log("totalDebtETH               ", a2);
+    console.log("availableBorrowsETH        ", a3);
+    console.log("currentLiquidationThreshold", a4);
+    console.log("ltv                        ", a5);
+    console.log("healthFactor               ", a6);
+    uint256 count = 1;
 
-    address wethAddress = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; //Weth on Ethereum
+    while (a3 > 0) {
+      console.log("Borrow", count);
+      address wethAddress = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; //Weth on Ethereum
 
-    LendingPool.borrow(wethAddress, a3, 2, 0, address(this)); //Amount borrowed. Will be received by the contract
+      LendingPool.borrow(wethAddress, a3 + 10000000, 2, 0, address(this)); //Amount borrowed. Will be received by the contract
 
-    Iweth weth = Iweth(wethAddress);
-    weth.withdraw(a3);
-    console.log("Balance", address(this).balance);
-    //bool sent = payable(msg.sender).send(address(this).balance);
-    //console.log(sent);
-    (a1, a2, a3, a4, a5, a6) = LendingPool.getUserAccountData(address(this));
-    console.log("a11", a1);
-    console.log("a22", a2);
-    console.log("a33", a3);
-    console.log("a44", a4);
-    console.log("a55", a5);
-    console.log("a66", a6);
+      Iweth weth = Iweth(wethAddress);
+      weth.withdraw(a3);
+      //console.log("Balance", address(this).balance);
+      //bool sent = payable(msg.sender).send(address(this).balance);
+      //console.log(sent);
+      (a1, a2, a3, a4, a5, a6) = LendingPool.getUserAccountData(address(this));
+      console.log("totalCollateralETH         ", a1);
+      console.log("totalDebtETH               ", a2);
+      console.log("availableBorrowsETH        ", a3);
+      console.log("currentLiquidationThreshold", a4);
+      console.log("ltv                        ", a5);
+      console.log("healthFactor               ", a6);
 
-    console.log("Current Bal-", address(this).balance);
-    wethGateway.depositETH{ value: (address(this).balance) }(
-      _LendingPoolAddress,
-      address(this),
-      0
-    );
-    (a1, a2, a3, a4, a5, a6) = LendingPool.getUserAccountData(address(this));
-    console.log("A1", a1);
-    console.log("A2", a2);
-    console.log("A3", a3);
-    console.log("A4", a4);
-    console.log("A5", a5);
-    console.log("A6", a6);
+      console.log("Deposit", count);
+      wethGateway.depositETH{ value: (address(this).balance) }(
+        _LendingPoolAddress,
+        address(this),
+        0
+      );
+      (a1, a2, a3, a4, a5, a6) = LendingPool.getUserAccountData(address(this));
+      console.log("totalCollateralETH         ", a1);
+      console.log("totalDebtETH               ", a2);
+      console.log("availableBorrowsETH        ", a3);
+      console.log("currentLiquidationThreshold", a4);
+      console.log("ltv                        ", a5);
+      console.log("healthFactor               ", a6);
 
-    LendingPool.borrow(wethAddress, a3, 2, 0, address(this)); //Amount borrowed. Will be received by the contract
-    weth.withdraw(a3);
-    (a1, a2, a3, a4, a5, a6) = LendingPool.getUserAccountData(address(this));
-    console.log("A11", a1);
-    console.log("A22", a2);
-    console.log("A33", a3);
-    console.log("A44", a4);
-    console.log("A55", a5);
-    console.log("A66", a6);
-
-    console.log("Current Bal-", address(this).balance);
-    wethGateway.depositETH{ value: (address(this).balance) }(
-      _LendingPoolAddress,
-      address(this),
-      0
-    );
-    (a1, a2, a3, a4, a5, a6) = LendingPool.getUserAccountData(address(this));
-    console.log("A111", a1);
-    console.log("A222", a2);
-    console.log("A333", a3);
-    console.log("A444", a4);
-    console.log("A555", a5);
-    console.log("A666", a6);
+      count++;
+      console.log("Balance", address(this).balance);
+    }
   }
 
   event ValueReceived(address user, uint256 amount); //Event for Receive
