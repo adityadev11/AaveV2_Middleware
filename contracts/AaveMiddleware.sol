@@ -18,6 +18,18 @@ import "./Price.sol";
 contract AaveMiddleware {
   using SafeERC20 for IERC20;
 
+  address wethGatewayAddress = 0xcc9a0B7c43DC2a5F023Bb9b738E45B0Ef6B06E04; //Mainnet
+  address wethAddress = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; //Weth on Ethereum
+  mapping(address => uint256) UserDeposit;
+
+  modifier hasSuppliedEth(address _userAddr) {
+    require(
+      UserDeposit[_userAddr] > 0,
+      "Error! User hasn't made a Deposit yet"
+    );
+    _;
+  }
+
   function getLendingPoolAddress() public view returns (address) {
     return
       ILendingPoolAddressesProvider(
@@ -59,7 +71,6 @@ contract AaveMiddleware {
   }
 
   function depositEth() external payable {
-    address wethGatewayAddress = 0xcc9a0B7c43DC2a5F023Bb9b738E45B0Ef6B06E04; //Mainnet
     address _LendingPoolAddress = getLendingPoolAddress();
     IWETHGateway wethGateway = IWETHGateway(wethGatewayAddress);
     wethGateway.depositETH{ value: msg.value }(
@@ -67,10 +78,10 @@ contract AaveMiddleware {
       address(this),
       0
     );
+    UserDeposit[msg.sender] += msg.value;
   }
 
   function withdrawEth(uint256 _amount) external {
-    address wethGatewayAddress = 0xcc9a0B7c43DC2a5F023Bb9b738E45B0Ef6B06E04; //Mainnet
     address _LendingPoolAddress = getLendingPoolAddress();
     IWETHGateway wethGateway = IWETHGateway(wethGatewayAddress);
     address aWethAddress = 0x030bA81f1c18d280636F32af80b9AAd02Cf0854e; //AWeth contract on Mainnet
@@ -80,7 +91,6 @@ contract AaveMiddleware {
   }
 
   function borrowEth(uint256 _amount) external payable {
-    address wethAddress = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; //Weth on Ethereum
     address _LendingPoolAddress = getLendingPoolAddress();
     ILendingPool LendingPool = ILendingPool(_LendingPoolAddress);
     LendingPool.borrow(wethAddress, _amount, 1, 0, address(this)); //Amount borrowed. Will be received by the contract
@@ -93,7 +103,6 @@ contract AaveMiddleware {
 
   function repayEth() external payable {
     uint256 _amount = msg.value;
-    address wethAddress = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; //Weth on Ethereum
     Iweth weth = Iweth(wethAddress);
     weth.deposit{ value: msg.value }();
 
@@ -104,7 +113,11 @@ contract AaveMiddleware {
     LendingPool.repay(wethAddress, _amount, 1, address(this)); //Amount borrowed
   }
 
-  function leverageEth(uint256 _amount) external payable {
+  function leverageEth(uint256 _amount)
+    external
+    payable
+    hasSuppliedEth(msg.sender)
+  {
     address _LendingPoolAddress = getLendingPoolAddress();
     ILendingPool LendingPool = ILendingPool(_LendingPoolAddress);
     (
@@ -115,14 +128,6 @@ contract AaveMiddleware {
       uint256 ltv,
       uint256 hFactor
     ) = LendingPool.getUserAccountData(address(this));
-    console.log("totalCollateralETH         ", collateral);
-    console.log("totalDebtETH               ", debt);
-    console.log("availableBorrowsETH        ", maxBorrow);
-    console.log("currentLiquidationThreshold", liqThreshold);
-    console.log("ltv                        ", ltv);
-    console.log("healthFactor               ", hFactor);
-    console.log("Deposit");
-    console.log("Amount requested to Borrow", _amount);
 
     require(
       _amount <= maxBorrow,
@@ -130,7 +135,6 @@ contract AaveMiddleware {
     );
 
     console.log("Borrowing..");
-    address wethAddress = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; //Weth on Ethereum
 
     LendingPool.borrow(wethAddress, _amount, 2, 0, address(this)); //Amount borrowed. Will be received by the contract
 
@@ -141,7 +145,6 @@ contract AaveMiddleware {
       "Successfully Borrowed! Contract balance-",
       address(this).balance
     );
-    address wethGatewayAddress = 0xcc9a0B7c43DC2a5F023Bb9b738E45B0Ef6B06E04; //Mainnet
     console.log("Depositing..");
     IWETHGateway wethGateway = IWETHGateway(wethGatewayAddress);
     wethGateway.depositETH{ value: address(this).balance }(
@@ -149,18 +152,7 @@ contract AaveMiddleware {
       address(this),
       0
     );
-    console.log(
-      "Successfully Deposited! Contract balance-",
-      address(this).balance
-    );
-    (collateral, debt, maxBorrow, liqThreshold, ltv, hFactor) = LendingPool
-      .getUserAccountData(address(this));
-    console.log("totalCollateralETH         ", collateral);
-    console.log("totalDebtETH               ", debt);
-    console.log("availableBorrowsETH        ", maxBorrow);
-    console.log("currentLiquidationThreshold", liqThreshold);
-    console.log("ltv                        ", ltv);
-    console.log("healthFactor               ", hFactor);
+    console.log("Successfully Deposited!");
   }
 
   function leverageToken(uint256 _amount, address _tokenAddr) external {
@@ -183,21 +175,12 @@ contract AaveMiddleware {
       uint256 ltv,
       uint256 hFactor
     ) = LendingPool.getUserAccountData(address(this));
-    console.log("totalCollateralETH         ", collateral);
-    console.log("totalDebtETH               ", debt);
-    console.log("availableBorrowsETH        ", maxBorrow);
-    console.log("currentLiquidationThreshold", liqThreshold);
-    console.log("ltv                        ", ltv);
-    console.log("healthFactor               ", hFactor);
     require(
       ((_amount * price) / 1000000000000000000) <= maxBorrow,
       "Error! Amount greater than allowed to borrow"
     );
 
     LendingPool.borrow(_tokenAddr, _amount, 2, 0, address(this)); //Amount borrowed. Will be received by the contract
-    //erc20Token.safeTransfer(msg.sender, _amount); //Transferring the borrowed funds to the user
-
-    //erc20Token.safeTransferFrom(msg.sender, address(this), _amount);
 
     erc20Token.safeApprove(_LendingPoolAddress, _amount);
     LendingPool.deposit(_tokenAddr, _amount, address(this), 0);
